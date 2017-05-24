@@ -1,8 +1,10 @@
-hash: 1a36e2e3058eb18016e8e4e566d13fa35cfa143f213099c9f32296b2fe29d99c
-updated: 2017-05-24T09:08:43.9972498-07:00
+hash: d5282f9eb005a67effff2834481d381f461514586981d8b6e9d08c7064b34521
+updated: 2017-05-24T10:24:28.016767-07:00
 imports:
 - name: github.com/codegangsta/cli
   version: 0bdeddeeb0f650497d603c4ad7b20cfe685682f6
+- name: github.com/denisenkom/go-mssqldb
+  version: e3bd523cf238e14637d0e028becc25651098a138
 - name: github.com/emirpasic/gods
   version: f6c17b524822278a87e3b3bd809fec33b51f5b46
   subpackages:
@@ -29,7 +31,9 @@ imports:
 - name: github.com/jinzhu/gorm
   version: 5174cc5c242a728b435ea2be8a2f7f998e15429b
   subpackages:
+  - dialects/mssql
   - dialects/postgres
+  - dialects/sqlite
 - name: github.com/jinzhu/inflection
   version: 1c35d901db3da928c72a72d8458480cc9ade058f
 - name: github.com/kr/logfmt
@@ -39,6 +43,8 @@ imports:
   subpackages:
   - hstore
   - oid
+- name: github.com/mattn/go-sqlite3
+  version: ca5e3819723d8eeaf170ad510e7da1d6d2e94a08
 - name: github.com/satori/go.uuid
   version: 879c5887cd475cd7864858769793b2ceb0d44feb
 - name: github.com/Sirupsen/logrus
@@ -48,6 +54,7 @@ imports:
   subpackages:
   - acme
   - acme/autocert
+  - md4
   - pbkdf2
   - scrypt
 - name: golang.org/x/net

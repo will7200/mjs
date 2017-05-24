@@ -28,9 +28,9 @@ type Job struct {
 
 	Type            string `json:"Type"` //default is command but can be function
 	InternalType    int
-	Command         pq.StringArray `json:"Command,omitempty" gorm:"type:varchar(100)[]"`
+	Command         pq.StringArray `json:"Command,omitempty" gorm:"type:varchar(100)"`
 	FunctionName    string         `json:"Function,omitempty"`
-	Arguments       pq.StringArray `json:"Arguments,omitempty" gorm:"type:varchar(100)[]"`
+	Arguments       pq.StringArray `json:"Arguments,omitempty" gorm:"type:varchar(100)"`
 	Description     string         `json:"Description,omitempty"`
 	IsActive        bool           `json:"Active" sql:"type:boolean;default:true"`
 	Schedule        string         `json:"Schedule"` //required
