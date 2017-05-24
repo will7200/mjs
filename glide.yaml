@@ -1,0 +1,38 @@
+package: github.com/will7200/mjs
+import:
+- package: github.com/Sirupsen/logrus
+  version: ^0.11.5
+- package: github.com/codegangsta/cli
+  version: ^1.19.1
+- package: github.com/emirpasic/gods
+  version: ^1.9.0
+  subpackages:
+  - lists/arraylist
+- package: github.com/go-kit/kit
+  version: ^0.4.0
+  subpackages:
+  - endpoint
+  - transport/http
+- package: github.com/gorilla/mux
+  version: ^1.4.0
+- package: github.com/gorilla/securecookie
+  version: ^1.1.0
+- package: github.com/jinzhu/gorm
+  version: ^1.0.0
+  subpackages:
+  - dialects/postgres
+- package: github.com/lib/pq
+- package: github.com/satori/go.uuid
+  version: ^1.1.0
+- package: golang.org/x/crypto
+  subpackages:
+  - acme/autocert
+  - scrypt
+- package: golang.org/x/net
+  subpackages:
+  - context
+testImport:
+- package: github.com/stretchr/testify
+  version: ^1.1.4
+  subpackages:
+  - assert
