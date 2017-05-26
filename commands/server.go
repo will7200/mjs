@@ -36,11 +36,13 @@ var servercmd = &cobra.Command{
 func init() {
 	servercmd.Flags().IntVarP(&port, "port", "p", 4004, "port on which to listen to")
 	servercmd.Flags().BoolVar(&verbose, "verbose", false, "output log verbose")
-	servercmd.Flags().String("dbname", "sqlite", "database type")
+	servercmd.Flags().String("dbname", "sqlite3", "database type")
 	servercmd.Flags().String("connection", "./temp_db.db", "database connection string")
+	servercmd.Flags().Int("workers", 4, "amount of workers in pool")
 	viper.BindPFlag("port", servercmd.Flags().Lookup("port"))
 	viper.BindPFlag("database.dbname", servercmd.Flags().Lookup("dbname"))
 	viper.BindPFlag("database.connection", servercmd.Flags().Lookup("connection"))
+	viper.BindPFlag("interface.workers", servercmd.Flags().Lookup("workers"))
 }
 func server(cmd *cobra.Command, args []string) error {
 	if verbose {
@@ -53,8 +55,7 @@ func server(cmd *cobra.Command, args []string) error {
 		parsedPort = ":4004"
 	}
 	Dispatch = &job.Dispatcher{}
-	Dispatch.StartDispatcher(4)
-	fmt.Println(viper.AllKeys())
+	Dispatch.StartDispatcher(viper.GetInt("interface.workers"))
 	db, err = gorm.Open(viper.GetString("database.dbname"), viper.GetString("database.connection"))
 	if err != nil {
 		panic(fmt.Sprintf("failed to connect database \ntype %s with connection %s", viper.GetString("dbname"), viper.GetString("connection")))
@@ -63,6 +64,5 @@ func server(cmd *cobra.Command, args []string) error {
 	Dispatch.SetPersistStorage(db)
 	fmt.Println(db.AutoMigrate(&job.Job{}, &job.JobStats{}).GetErrors())
 	log.Infof("Starting Server on port %d", port)
-	log.Fatal(api.StartServer(parsedPort, Dispatch, db))
-	return nil
+	return api.StartServer(parsedPort, Dispatch, db)
 }
