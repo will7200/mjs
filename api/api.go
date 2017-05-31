@@ -49,6 +49,16 @@ func HandleAddJob(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
+	if value := r.Header.Get("TYPE"); value != "" {
+		if value == "UNIQUE" {
+			jj := &job.Job{}
+			if !db.Where(job.Job{Domain: j.Domain, SubDomain: j.SubDomain, Name: j.Name,
+				Application: j.Application}).First(jj).RecordNotFound() {
+				http.Error(w, errors.New("Job already exists").Error(), http.StatusBadRequest)
+				return
+			}
+		}
+	}
 	if db.Create(j).Error != nil {
 		http.Error(w, errors.New("Update to Save Job").Error(), http.StatusBadRequest)
 		return
@@ -76,9 +86,9 @@ func HandleJob(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusNotFound)
 		return
 	}
-	handleGetJob(w, r, j)
-	/*if r.Method == "DELETE" {
-		err = j.Delete(cache, db)
+	fmt.Println(r.Method)
+	if r.Method == "DELETE" {
+		err := db.Delete(j).Error
 		if err != nil {
 			w.WriteHeader(http.StatusInternalServerError)
 		} else {
@@ -86,7 +96,7 @@ func HandleJob(w http.ResponseWriter, r *http.Request) {
 		}
 	} else if r.Method == "GET" {
 		handleGetJob(w, r, j)
-	}*/
+	}
 }
 
 type JobResponse struct {
@@ -171,7 +181,7 @@ func SetupAPIRoutes(r *mux.Router) {
 	r.HandleFunc(APIJobPath+"{id}/", HandleJob).Methods("DELETE", "GET")
 	// Route for getting job stats
 	r.HandleFunc(APIJobPath+"stats/{id}/", HandleListJobStats).Methods("GET")
-	// Route for listing all jops
+	// Route for listing all jobs
 	r.HandleFunc(APIJobPath, HandleListJobs).Methods("GET")
 	// Route for manually start a job
 	r.HandleFunc(APIJobPath+"start/{id}/", HandleStartJob).Methods("POST")

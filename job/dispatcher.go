@@ -110,6 +110,7 @@ func (w *Worker) Start() {
 				}
 				work.wJob.lock.RUnlock()
 				work.wJob.AddStats(stats)
+				StatsQueue <- stats
 				CheckQueue <- work.wJob
 			case <-w.QuitChan:
 				// We have been asked to stop.
@@ -143,6 +144,7 @@ type Dispatcher struct {
 var WorkQueue = make(chan WorkRequest, 100)
 var Message = make(chan string, 100)
 var CheckQueue = make(chan *Job, 10)
+var StatsQueue = make(chan *JobStats, 10)
 
 func (d *Dispatcher) RegisterFunctions(f Funcs) {
 	callable = f
@@ -162,7 +164,6 @@ func (d *Dispatcher) StartDispatcher(nworkers int) {
 		worker.Start()
 		d.Workers.Add(worker)
 	}
-
 	go func() {
 		for {
 			select {
@@ -176,6 +177,12 @@ func (d *Dispatcher) StartDispatcher(nworkers int) {
 					j.CheckSchedule(d)
 					d.db.Save(j)
 				}(work, d)
+			case stats := <-StatsQueue:
+				go func(stats *JobStats, d *Dispatcher) {
+					if err := d.db.Create(stats).Error; err != nil {
+						log.Debugf("Error saving stats")
+					}
+				}(stats, d)
 			}
 		}
 	}()
@@ -228,4 +235,13 @@ func (d *Dispatcher) AddFutureJob(w *Job, t time.Duration) {
 
 func (d *Dispatcher) SetPersistStorage(db *gorm.DB) {
 	d.db = db
+}
+
+func (d *Dispatcher) AddPendingJobs() {
+	jobs := []Job{}
+	d.db.Preload("Stats").Find(&jobs)
+	for i := 0; i < len(jobs); i++ {
+		t := &jobs[i]
+		t.CheckSchedule(d)
+	}
 }
