@@ -243,5 +243,6 @@ func (d *Dispatcher) AddPendingJobs() {
 	for i := 0; i < len(jobs); i++ {
 		t := &jobs[i]
 		t.CheckSchedule(d)
+		d.db.Save(t)
 	}
 }

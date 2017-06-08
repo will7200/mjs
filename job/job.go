@@ -161,7 +161,7 @@ func (j *Job) StartWaiting(d *Dispatcher) {
 }
 
 func (j *Job) GetWaitDuration() time.Duration {
-
+	log.Debugf("%+v", j)
 	waitDuration := time.Duration(j.ScheduleTime.UnixNano() - time.Now().UnixNano())
 
 	if waitDuration < 0 {
@@ -171,6 +171,15 @@ func (j *Job) GetWaitDuration() time.Duration {
 
 		if j.LastRunAt.IsZero() {
 			waitDuration = j.DelayDuration.ToDuration()
+			t := j.ScheduleTime
+			for {
+				fmt.Println(t)
+				t = t.Add(waitDuration)
+				if t.After(time.Now()) {
+					break
+				}
+			}
+			waitDuration = t.Sub(time.Now())
 		} else {
 			last := j.LastRunAt.Add(j.DelayDuration.ToDuration())
 			waitDuration = last.Sub(time.Now())
