@@ -3,6 +3,7 @@ package commands
 import (
 	"bufio"
 	"fmt"
+	stdlog "log"
 	"os"
 	"os/exec"
 	"strings"
@@ -13,10 +14,12 @@ import (
 	_ "github.com/jinzhu/gorm/dialects/mssql"
 	_ "github.com/jinzhu/gorm/dialects/postgres"
 	_ "github.com/jinzhu/gorm/dialects/sqlite"
+	colorable "github.com/mattn/go-colorable"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 	"github.com/will7200/mjs/api"
 	"github.com/will7200/mjs/job"
+	"github.com/will7200/mjs/utils/hooks"
 )
 
 var (
@@ -64,13 +67,19 @@ func server(cmd *cobra.Command, args []string) error {
 	} else {
 		parsedPort = ":4004"
 	}
+	log.SetFormatter(&log.TextFormatter{ForceColors: true})
+	log.SetOutput(colorable.NewColorableStdout())
+	log.AddHook(hooks.NewHook(&hooks.CallerHookOptions{
+		Field: "src",
+		Flags: stdlog.Lshortfile,
+	}))
 	Dispatch = &job.Dispatcher{}
 	Dispatch.StartDispatcher(viper.GetInt("interface.workers"))
 	db, err = gorm.Open(viper.GetString("database.dbname"), viper.GetString("database.connection"))
 	if err != nil {
 		panic(fmt.Sprintf("failed to connect database \ntype %s with connection %s", viper.GetString("dbname"), viper.GetString("connection")))
 	}
-	db.LogMode(true)
+	db.LogMode(false)
 	Dispatch.SetPersistStorage(db)
 	fmt.Println(db.AutoMigrate(&job.Job{}, &job.JobStats{}).GetErrors())
 	log.Infof("Starting Server on port %d", port)

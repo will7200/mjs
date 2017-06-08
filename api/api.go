@@ -86,7 +86,6 @@ func HandleJob(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusNotFound)
 		return
 	}
-	fmt.Println(r.Method)
 	if r.Method == "DELETE" {
 		err := db.Delete(j).Error
 		if err != nil {
