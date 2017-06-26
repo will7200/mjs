@@ -9,9 +9,9 @@ import (
 	"net/http"
 	"time"
 
-	log "github.com/Sirupsen/logrus"
 	"github.com/gorilla/mux"
 	"github.com/jinzhu/gorm"
+	log "github.com/sirupsen/logrus"
 	"github.com/will7200/mjs/job"
 )
 
