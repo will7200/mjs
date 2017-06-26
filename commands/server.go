@@ -9,12 +9,14 @@ import (
 	"strings"
 	"time"
 
-	log "github.com/Sirupsen/logrus"
 	"github.com/jinzhu/gorm"
 	_ "github.com/jinzhu/gorm/dialects/mssql"
 	_ "github.com/jinzhu/gorm/dialects/postgres"
 	_ "github.com/jinzhu/gorm/dialects/sqlite"
+	rotatelogs "github.com/lestrrat/go-file-rotatelogs"
 	colorable "github.com/mattn/go-colorable"
+	"github.com/rifflock/lfshook"
+	log "github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 	"github.com/will7200/mjs/api"
@@ -54,6 +56,7 @@ func init() {
 	viper.BindPFlag("database.connection", servercmd.Flags().Lookup("connection"))
 	viper.BindPFlag("interface.workers", servercmd.Flags().Lookup("workers"))
 }
+
 func server(cmd *cobra.Command, args []string) error {
 	if detach {
 		return rundetach(args)
@@ -81,7 +84,26 @@ func server(cmd *cobra.Command, args []string) error {
 	}
 	db.LogMode(false)
 	Dispatch.SetPersistStorage(db)
-	fmt.Println(db.AutoMigrate(&job.Job{}, &job.JobStats{}).GetErrors())
+	if result := db.AutoMigrate(&job.Job{}, &job.JobStats{}).GetErrors(); len(result) != 0 {
+		log.Fatal("Couldn't migrate the needed tables shutting down with the following errors:\n", result)
+	}
+	if filelocation := viper.GetString("logging.filelocation"); filelocation != "" {
+		path := filelocation
+		writer, err := rotatelogs.New(
+			path+".%Y%m%d%H%M",
+			rotatelogs.WithLinkName(path),
+			//rotatelogs.WithMaxAge(time.Duration(86400)*time.Second),
+			rotatelogs.WithRotationTime(time.Duration(604800)*time.Second),
+		)
+		if err != nil {
+			log.Fatal("failed to create rotatelogs:", err)
+		}
+		log.AddHook(lfshook.NewHook(lfshook.WriterMap{
+			log.InfoLevel:  writer,
+			log.ErrorLevel: writer,
+		}))
+
+	}
 	log.Infof("Starting Server on port %d", port)
 	Dispatch.AddPendingJobs()
 	return api.StartServer(parsedPort, Dispatch, db)
