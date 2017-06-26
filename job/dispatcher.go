@@ -7,10 +7,10 @@ import (
 	"os/exec"
 	"time"
 
-	log "github.com/Sirupsen/logrus"
 	"github.com/emirpasic/gods/lists/arraylist"
 	"github.com/jinzhu/gorm"
 	uuid "github.com/satori/go.uuid"
+	log "github.com/sirupsen/logrus"
 )
 
 var (
@@ -226,6 +226,18 @@ func (d *Dispatcher) AddWorkRequest(w WorkRequest, t time.Duration) {
 	w.when = NewAfterFunc(t, f)
 	w.wJob.jobTimer = w.when.timer
 	d.Waiting = append(d.Waiting, w)
+}
+
+func (d *Dispatcher) RemoveWorkRequest(j *Job) bool {
+	for index, request := range d.Waiting {
+		if request.wJob.ID == j.ID {
+			request.when.Stop()
+			request.wJob.jobTimer.Stop()
+			d.Waiting = append(d.Waiting[:index], d.Waiting[index+1:]...)
+			return true
+		}
+	}
+	return false
 }
 
 func (d *Dispatcher) AddFutureJob(w *Job, t time.Duration) {

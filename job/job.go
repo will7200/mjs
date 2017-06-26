@@ -10,10 +10,10 @@ import (
 
 	"github.com/will7200/mjs/utils/iso8601"
 
-	log "github.com/Sirupsen/logrus"
 	"github.com/jinzhu/gorm"
 	"github.com/lib/pq"
 	uuid "github.com/satori/go.uuid"
+	log "github.com/sirupsen/logrus"
 )
 
 var (
@@ -173,7 +173,6 @@ func (j *Job) GetWaitDuration() time.Duration {
 			waitDuration = j.DelayDuration.ToDuration()
 			t := j.ScheduleTime
 			for {
-				fmt.Println(t)
 				t = t.Add(waitDuration)
 				if t.After(time.Now()) {
 					break
