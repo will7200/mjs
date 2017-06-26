@@ -7,11 +7,11 @@ import (
 	"net/http"
 	"os"
 	"os/signal"
-	"sync"
 	"syscall"
 	"time"
 
 	stdprometheus "github.com/prometheus/client_golang/prometheus"
+	"github.com/prometheus/client_golang/prometheus/promhttp"
 
 	"github.com/go-kit/kit/log"
 	kitprometheus "github.com/go-kit/kit/metrics/prometheus"
@@ -45,8 +45,7 @@ func main() {
 	flag.Parse()
 
 	var logger log.Logger
-	logger = log.NewLogfmtLogger(os.Stderr)
-	logger = &serializedLogger{Logger: logger}
+	logger = log.NewLogfmtLogger(log.NewSyncWriter(os.Stderr))
 	logger = log.With(logger, "ts", log.DefaultTimestampUTC)
 
 	var (
@@ -142,7 +141,7 @@ func main() {
 	mux.Handle("/handling/v1/", handling.MakeHandler(hs, httpLogger))
 
 	http.Handle("/", accessControl(mux))
-	http.Handle("/metrics", stdprometheus.Handler())
+	http.Handle("/metrics", promhttp.Handler())
 
 	errs := make(chan error, 2)
 	go func() {
@@ -198,15 +197,4 @@ func storeTestData(r cargo.Repository) {
 	if err := r.Store(test2); err != nil {
 		panic(err)
 	}
-}
-
-type serializedLogger struct {
-	mtx sync.Mutex
-	log.Logger
-}
-
-func (l *serializedLogger) Log(keyvals ...interface{}) error {
-	l.mtx.Lock()
-	defer l.mtx.Unlock()
-	return l.Logger.Log(keyvals...)
 }
