@@ -67,15 +67,22 @@ func (j *Job) BeforeCreate(scope *gorm.Scope) error {
 
 func RawJob(v []byte, d *Dispatcher) (*Job, error) {
 	j := &Job{}
-	err := j.NewJob(v, d)
+	err := j.unmarsh(v)
 	return j, err
 }
-func (j *Job) NewJob(v []byte, d *Dispatcher) error {
+func (j *Job) unmarsh(v []byte) error {
 	if err := json.Unmarshal(v, j); err != nil {
 		log.Printf("Error occured when unmarshalling data: %s", err)
 		return err
 	}
 	if err := j.ParseSchedule(); err != nil {
+		return err
+	}
+	return nil
+}
+func (j *Job) NewJob(v []byte, d *Dispatcher) error {
+	err := j.unmarsh(v)
+	if err != nil {
 		return err
 	}
 	j.StartWaiting(d)
@@ -153,7 +160,7 @@ func (j *Job) CheckSchedule(d *Dispatcher) {
 func (j *Job) StartWaiting(d *Dispatcher) {
 	waitDuration := j.GetWaitDuration()
 
-	log.Infof("Job Scheduled to run in: %s", waitDuration)
+	log.Infof("%s Scheduled to run in: %s", j.Name, waitDuration)
 	j.lock.Lock()
 	j.NextRunAt = time.Now().Add(waitDuration)
 	j.lock.Unlock()

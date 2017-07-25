@@ -63,6 +63,7 @@ func HandleAddJob(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, errors.New("Update to Save Job").Error(), http.StatusBadRequest)
 		return
 	}
+	j.StartWaiting(d)
 	resp := &addJobResponse{
 		ID: j.ID,
 	}
@@ -87,6 +88,11 @@ func HandleJob(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	if r.Method == "DELETE" {
+		if !d.RemoveWorkRequest(j) {
+			log.Infof("Job with id %s not found in dispatcher", j.ID)
+		} else {
+			log.Debugf("Job with id %s found in dispatcher", j.ID)
+		}
 		err := db.Delete(j).Error
 		if err != nil {
 			w.WriteHeader(http.StatusInternalServerError)
