@@ -28,11 +28,11 @@ type Job struct {
 
 	Type            string `json:"Type"` //default is command but can be function
 	InternalType    int
-	Command         pq.StringArray `json:"Command,omitempty" gorm:"type:varchar(100)"`
+	Command         pq.StringArray `json:"Command,omitempty" gorm:"type:varchar(200)"`
 	FunctionName    string         `json:"Function,omitempty"`
 	Arguments       pq.StringArray `json:"Arguments,omitempty" gorm:"type:varchar(100)"`
 	Description     string         `json:"Description,omitempty"`
-	IsActive        bool           `json:"Active" sql:"type:boolean;default:true"`
+	IsActive        bool           `json:"Active" sql:"type:bit;default:1"`
 	Schedule        string         `json:"Schedule"` //required
 	ScheduleTime    time.Time
 	Domain          string            `json:"Domain"`
@@ -47,6 +47,7 @@ type Job struct {
 	jobTimer        *time.Timer
 	Stats           []*JobStats `json:"stats,omitempty" gorm:"ForeignKey:ID;AssociationForeignKey:ID"`
 	lock            sync.RWMutex
+	Pipeoutput      bool `json:"pipeoutput,omitempty" sql:"type:bit;default:0"`
 }
 
 type JobStats struct {
@@ -60,6 +61,7 @@ type JobStats struct {
 }
 
 func (j *Job) BeforeCreate(scope *gorm.Scope) error {
+	//setIdentityInsert(scope)
 	scope.SetColumn("ID", uuid.NewV1().String())
 	scope.DB().Model(j).UpdateColumn(Job{IsActive: true})
 	return nil

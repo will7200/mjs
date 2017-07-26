@@ -82,7 +82,9 @@ func server(cmd *cobra.Command, args []string) error {
 	if err != nil {
 		panic(fmt.Sprintf("failed to connect database \ntype %s with connection %s", viper.GetString("dbname"), viper.GetString("connection")))
 	}
-	db.LogMode(false)
+	if verbose {
+		db.LogMode(true)
+	}
 	Dispatch.SetPersistStorage(db)
 	if result := db.AutoMigrate(&job.Job{}, &job.JobStats{}).GetErrors(); len(result) != 0 {
 		log.Fatal("Couldn't migrate the needed tables shutting down with the following errors:\n", result)

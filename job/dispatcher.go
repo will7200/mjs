@@ -93,8 +93,10 @@ func (w *Worker) Start() {
 					stats.RanAt = time.Now()
 					log.Debugf("%v\n", args)
 					cmd := exec.Command(args[0], args[1:]...)
-					cmd.Stdout = os.Stdout
-					cmd.Stderr = os.Stderr
+					if work.wJob.Pipeoutput {
+						cmd.Stdout = os.Stdout
+						cmd.Stderr = os.Stderr
+					}
 					err := cmd.Run()
 					if err != nil {
 						log.Errorln(err)

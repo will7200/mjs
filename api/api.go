@@ -59,8 +59,8 @@ func HandleAddJob(w http.ResponseWriter, r *http.Request) {
 			}
 		}
 	}
-	if db.Create(j).Error != nil {
-		http.Error(w, errors.New("Update to Save Job").Error(), http.StatusBadRequest)
+	if err = db.Create(j).Error; err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
 	j.StartWaiting(d)
