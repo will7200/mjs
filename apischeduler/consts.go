@@ -6,6 +6,7 @@ type contextkey string
 
 const (
 	JobUniqueness string = "TYPE"
+	APPName       string = "mjs"
 )
 
 var (

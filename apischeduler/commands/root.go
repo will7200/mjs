@@ -20,6 +20,7 @@ import (
 	homedir "github.com/mitchellh/go-homedir"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
+	"github.com/will7200/mjs/apischeduler"
 )
 
 var cfgFile string
@@ -73,7 +74,7 @@ func initConfig() {
 
 		// Search config in home directory with name ".test" (without extension).
 		viper.AddConfigPath(home)
-		viper.SetConfigName("mjs")
+		viper.SetConfigName(apischeduler.APPName)
 		viper.AddConfigPath(".")
 	}
 
