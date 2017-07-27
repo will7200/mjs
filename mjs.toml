@@ -1,4 +1,0 @@
-# A sample TOML config file.
-[database]
-dbname = "sqlite3"
-connection = "./temp.db"

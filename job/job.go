@@ -170,7 +170,7 @@ func (j *Job) StartWaiting(d *Dispatcher) {
 }
 
 func (j *Job) GetWaitDuration() time.Duration {
-	log.Debugf("%+v", j)
+	//log.Debugf("%+v", j)
 	waitDuration := time.Duration(j.ScheduleTime.UnixNano() - time.Now().UnixNano())
 
 	if waitDuration < 0 {
