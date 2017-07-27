@@ -24,7 +24,7 @@ func NewHTTPHandler(endpoints endpoints.Endpoints) *mux.Router {
 		endpoints.AddEndpoint,
 		DecodeAddRequest,
 		EncodeAddResponse,
-		opts...,
+		(append(opts, httptransport.ServerBefore(getHeaders)))...,
 	)).Methods("POST")
 	m.Handle("/start/{id}", httptransport.NewServer(
 		endpoints.StartEndpoint,
@@ -105,6 +105,7 @@ func DecodeAddRequest(_ context.Context, r *http.Request) (req interface{}, err 
 // the response as JSON to the response writer. Primarily useful in a server.
 func EncodeAddResponse(_ context.Context, w http.ResponseWriter, response interface{}) (err error) {
 	w.Header().Set("Content-Type", "application/json; charset=utf-8")
+	w.WriteHeader(http.StatusCreated)
 	e := json.NewEncoder(w)
 	e.SetIndent("", "\t")
 	err = e.Encode(response)
