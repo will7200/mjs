@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"net/http"
+	"reflect"
 
 	httptransport "github.com/go-kit/kit/transport/http"
 	"github.com/gorilla/mux"
@@ -78,6 +79,9 @@ type errorWrapper struct {
 func errorEncoder(_ context.Context, err error, w http.ResponseWriter) {
 	w.Header().Set("Content-Type", "application/json; charset=utf-8")
 	msg := err.Error()
+	if reflect.TypeOf(err).Elem().String() == apischeduler.AppErrorString {
+		err = reflect.ValueOf(err).Elem().FieldByName(apischeduler.AppErrorFieldInternal).Interface().(error)
+	}
 	switch err {
 	case apischeduler.JobExists:
 		w.WriteHeader(http.StatusNotFound)
@@ -90,14 +94,14 @@ func errorEncoder(_ context.Context, err error, w http.ResponseWriter) {
 func getHeaders(c context.Context, r *http.Request) context.Context {
 	value := r.Header.Get(apischeduler.JobUniqueness)
 	return context.WithValue(c, apischeduler.JobUniqueness, value)
-
 }
 
 // DecodeAddRequest is a transport/http.DecodeRequestFunc that decodes a
 // JSON-encoded request from the HTTP request body. Primarily useful in a server.
 func DecodeAddRequest(_ context.Context, r *http.Request) (req interface{}, err error) {
-	req = endpoints.AddRequest{}
-	err = json.NewDecoder(r.Body).Decode(&r)
+	rr := endpoints.AddRequest{}
+	err = json.NewDecoder(r.Body).Decode(&rr)
+	req = rr
 	return req, err
 }
 
@@ -149,8 +153,9 @@ func EncodeRemoveResponse(_ context.Context, w http.ResponseWriter, response int
 // DecodeChangeRequest is a transport/http.DecodeRequestFunc that decodes a
 // JSON-encoded request from the HTTP request body. Primarily useful in a server.
 func DecodeChangeRequest(_ context.Context, r *http.Request) (req interface{}, err error) {
-	req = endpoints.ChangeRequest{Id: mux.Vars(r)["id"]}
-	err = json.NewDecoder(r.Body).Decode(&r)
+	rr := endpoints.ChangeRequest{Id: mux.Vars(r)["id"]}
+	err = json.NewDecoder(r.Body).Decode(&rr)
+	req = rr
 	return req, err
 }
 

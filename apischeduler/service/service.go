@@ -3,6 +3,7 @@ package service
 import (
 	"context"
 	"fmt"
+	"time"
 
 	"github.com/jinzhu/gorm"
 
@@ -60,7 +61,7 @@ func (ap *stubAPISchedulerService) Add(ctx context.Context, reqjob job.Job) (id 
 			jj := &job.Job{}
 			if !db.Where(job.Job{Domain: j.Domain, SubDomain: j.SubDomain, Name: j.Name,
 				Application: j.Application}).First(jj).RecordNotFound() {
-				err = apischeduler.JobExists
+				err = apischeduler.GetAppError(apischeduler.JobExists, jj.ID)
 				return
 			}
 		}
@@ -79,8 +80,7 @@ func (ap *stubAPISchedulerService) Start(ctx context.Context, id string) (messag
 	if err != nil {
 		return "", err
 	}
-
-	d.StartWaiting(ap.dispatch)
+	ap.dispatch.AddFutureJob(d, time.Millisecond*500)
 	if err != nil {
 		return "", err
 	}
@@ -96,7 +96,7 @@ func (ap *stubAPISchedulerService) Remove(ctx context.Context, id string) (messa
 		return "", err
 	}
 	if err = ap.db.Delete(d).Error; err != nil {
-		err = fmt.Errorf("Unable to delete from database\nError:%s", err.Error())
+		err = apischeduler.GetAppError(apischeduler.JobDBerr, err.Error())
 		return "", err
 	}
 	message = fmt.Sprintf("Job with id %s has been removed", d.ID)
@@ -110,7 +110,7 @@ func (ap *stubAPISchedulerService) Change(ctx context.Context, id string, reqjob
 		return "", err
 	}
 	if err = ap.db.Model(d).Update(reqjob).Error; err != nil {
-		err = fmt.Errorf("Cannot Update record with id %s;Database Error:%s", id, err.Error())
+		err = apischeduler.GetAppError(fmt.Errorf("Cannot Update record with id %s", id), err.Error())
 		return "", err
 	}
 	//TODO : MAYBE IMPLEMENT TO GET THE AMOUNT OF FIELDS CHANGED
@@ -146,10 +146,10 @@ func (ap *stubAPISchedulerService) Enable(ctx context.Context, id string) (messa
 		return "", err
 	}
 	if err := ap.db.Model(d).Update(job.Job{IsActive: true}).Error; err != nil {
-		err = fmt.Errorf("Cannot Enable record with id %s;Database Error:%s", id, err.Error())
+		err = apischeduler.GetAppError(fmt.Errorf("Cannot Enable record with id %s", id), err.Error())
 		return "", err
 	}
-	message = fmt.Sprintf("DA with id %s has been enabled", d.ID)
+	message = fmt.Sprintf("Job with id %s has been enabled", d.ID)
 	return message, err
 }
 
@@ -160,9 +160,9 @@ func (ap *stubAPISchedulerService) Disable(ctx context.Context, id string) (mess
 		return "", err
 	}
 	if err = ap.db.Model(d).Update(job.Job{IsActive: false}).Error; err != nil {
-		err = fmt.Errorf("Cannot Disable record with id %s;Database Error:%s", id, err.Error())
+		err = apischeduler.GetAppError(fmt.Errorf("Cannot Disable record with id %s", id), err.Error())
 		return "", err
 	}
-	message = fmt.Sprintf("DA with id %s has been disabled", d.ID)
+	message = fmt.Sprintf("Job with id %s has been disabled", d.ID)
 	return message, err
 }
