@@ -207,6 +207,7 @@ func (d *Dispatcher) Block(t time.Duration) {
 	}
 }
 func (d *Dispatcher) AddJob(w WorkRequest) {
+	log.Infof("Job %s added to queue, will run shortly",w.wJob.Name)
 	WorkQueue <- w
 }
 
