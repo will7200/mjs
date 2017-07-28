@@ -1,0 +1,9 @@
+language: go
+
+go:
+  - 1.7
+  - 1.8
+
+install: true
+script:
+  - GO15VENDOREXPERIMENT=1 make build
