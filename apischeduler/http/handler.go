@@ -84,6 +84,8 @@ func errorEncoder(_ context.Context, err error, w http.ResponseWriter) {
 	}
 	switch err {
 	case apischeduler.JobExists:
+		w.WriteHeader(http.StatusConflict)
+	case apischeduler.JobDNE:
 		w.WriteHeader(http.StatusNotFound)
 	default:
 		w.WriteHeader(http.StatusInternalServerError)
