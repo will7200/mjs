@@ -107,7 +107,7 @@ func (w *Worker) Start() {
 					stats.Success = true
 					stats.ExecutionDuration = time.Now().Sub(stats.RanAt)
 				default:
-					log.Println("")
+					//log.Println("")
 					log.Debugf("Cannot do requested work unknown type: %s", work.wJob.Type)
 				}
 				work.wJob.lock.RUnlock()
@@ -180,11 +180,13 @@ func (d *Dispatcher) StartDispatcher(nworkers int) {
 					d.db.Save(j)
 				}(work, d)
 			case stats := <-StatsQueue:
-				go func(stats *JobStats, d *Dispatcher) {
-					if err := d.db.Create(stats).Error; err != nil {
-						log.Debugf("Error saving stats")
-					}
-				}(stats, d)
+				log.Info("CALLING")
+				_ = stats
+				//go func(stats *JobStats, d *Dispatcher) {
+				//if err := d.db.Create(stats).Error; err != nil {
+				//	log.Debugf("Error saving stats")
+				//}
+				//}(stats, d)
 			}
 		}
 	}()
@@ -207,7 +209,7 @@ func (d *Dispatcher) Block(t time.Duration) {
 	}
 }
 func (d *Dispatcher) AddJob(w WorkRequest) {
-	log.Infof("Job %s added to queue, will run shortly",w.wJob.Name)
+	log.Infof("Job %s added to queue, will run shortly", w.wJob.Name)
 	WorkQueue <- w
 }
 

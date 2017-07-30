@@ -9,7 +9,7 @@ type contextkey string
 
 const (
 	JobUniqueness         string = "TYPE"
-	APPName               string = "mjs"
+	APPName               string = ".mjs"
 	AppErrorString        string = "apischeduler.AppError"
 	AppErrorFieldInternal string = "Internal"
 )
@@ -17,7 +17,7 @@ const (
 var (
 	JobExists error = errors.New("Job already exists")
 	JobDNE    error = errors.New("Job does not exist")
-	JobDBerr     error = errors.New("Interal DB Error")
+	JobDBerr  error = errors.New("Interal DB Error")
 )
 
 type AppError struct {

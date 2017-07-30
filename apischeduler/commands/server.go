@@ -51,18 +51,21 @@ func init() {
 	servercmd.Flags().String("homedir", "./mda/", "home directory to download into")
 	servercmd.Flags().Int("workers", 4, "Amount of workers for the Dispatcher")
 	servercmd.Flags().BoolVar(&showHTTPDir, "httpdir", false, "Output the http directory")
-	//servercmd.Flags().Int("workers", 4, "amount of workers in pool")
-	viper.BindPFlag("port", servercmd.Flags().Lookup("port"))
+	viper.BindPFlag("interface.port", servercmd.Flags().Lookup("port"))
 	viper.BindPFlag("database.dbname", servercmd.Flags().Lookup("dbname"))
 	viper.BindPFlag("database.connection", servercmd.Flags().Lookup("connection"))
 	viper.BindPFlag("interface.workers", servercmd.Flags().Lookup("workers"))
 	viper.BindPFlag("interface.home", servercmd.Flags().Lookup("homedir"))
+	viper.SetEnvPrefix("mda") // will be uppercased automatically
+	viper.BindEnv("VERBOSE", "verbose")
 }
 func server(cmd *cobra.Command, args []string) error {
+	verbose = viper.GetBool("verbose")
 	if verbose {
 		log.SetLevel(log.DebugLevel)
 	}
 	var parsedPort string
+	port = viper.GetInt("interface.port")
 	if port != 0 {
 		parsedPort = fmt.Sprintf(":%d", port)
 	} else {
@@ -83,14 +86,12 @@ func server(cmd *cobra.Command, args []string) error {
 	if err != nil {
 		panic(fmt.Sprintf("failed to connect database \ntype %s with connection %s", viper.GetString("database.dbname"), viper.GetString("database.connection")))
 	}
-	//api.CreateDatabaseTables(db)
 	if errors := db.AutoMigrate(&job.Job{}, &job.JobStats{}).GetErrors(); len(errors) != 0 {
-		fmt.Printf("Cound not auto migrate tables for reasons below %v", errors)
+		fmt.Printf("Cound not auto migrate tables for reasons below\n %v", errors)
 		fmt.Println()
 		panic("Could not make/migrate tables")
 	}
 	Dispatch.SetPersistStorage(db)
-	//fmt.Println(db.AutoMigrate(&job.Job{}, &job.JobStats{}).GetErrors())
 	svc := service.New(db, Dispatch)
 	ep := endpoints.New(svc)
 	r := apischedulerhttp.NewHTTPHandler(ep)

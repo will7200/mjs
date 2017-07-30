@@ -86,6 +86,7 @@ func server(cmd *cobra.Command, args []string) error {
 		db.LogMode(true)
 	}
 	Dispatch.SetPersistStorage(db)
+	fmt.Println(viper.GetString("database.dbname"))
 	if result := db.AutoMigrate(&job.Job{}, &job.JobStats{}).GetErrors(); len(result) != 0 {
 		log.Fatal("Couldn't migrate the needed tables shutting down with the following errors:\n", result)
 	}

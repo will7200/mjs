@@ -32,7 +32,7 @@ type Job struct {
 	FunctionName    string         `json:"Function,omitempty"`
 	Arguments       pq.StringArray `json:"Arguments,omitempty" gorm:"type:varchar(100)"`
 	Description     string         `json:"Description,omitempty"`
-	IsActive        bool           `json:"Active" sql:"type:bit;default:1"`
+	IsActive        bool           `json:"Active"`
 	Schedule        string         `json:"Schedule"` //required
 	ScheduleTime    time.Time
 	Domain          string            `json:"Domain"`
@@ -47,7 +47,7 @@ type Job struct {
 	jobTimer        *time.Timer
 	Stats           []*JobStats `json:"stats,omitempty" gorm:"ForeignKey:ID;AssociationForeignKey:ID"`
 	lock            sync.RWMutex
-	Pipeoutput      bool `json:"pipeoutput,omitempty" sql:"type:bit;default:0"`
+	Pipeoutput      bool `json:"pipeoutput,omitempty"`
 }
 
 type JobStats struct {
@@ -63,7 +63,7 @@ type JobStats struct {
 func (j *Job) BeforeCreate(scope *gorm.Scope) error {
 	//setIdentityInsert(scope)
 	scope.SetColumn("ID", uuid.NewV1().String())
-	scope.DB().Model(j).UpdateColumn(Job{IsActive: true})
+	scope.DB().Model(j).UpdateColumn(Job{IsActive: true, Pipeoutput: false, InternalType: 3})
 	return nil
 }
 
