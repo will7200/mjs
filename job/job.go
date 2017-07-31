@@ -99,7 +99,6 @@ func (j *Job) ParseSchedule() error {
 			"Schedule not formatted correctly. Should look like: R/2014-03-08T20:00:00Z/PT2H",
 		)
 	}
-
 	// Handle Repeat Amount
 	if splitTime[0] == "R" {
 		// Repeat forever
@@ -113,8 +112,9 @@ func (j *Job) ParseSchedule() error {
 	}
 	log.Debugf("TimesToRepeat: %d", j.TimesToRepeat)
 
-	j.ScheduleTime, err = time.Parse(time.RFC3339, splitTime[1])
+	j.ScheduleTime, err = time.Parse("2006-01-02T15:04:05Z-0700", splitTime[1])
 	if err != nil {
+		log.Debug("Parsing without timezone")
 		j.ScheduleTime, err = time.Parse(RFC3339WithoutTimezone, splitTime[1])
 		if err != nil {
 			log.Errorf("Error converting scheduleTime to a time.Time: %s", err)
@@ -125,7 +125,7 @@ func (j *Job) ParseSchedule() error {
 		return fmt.Errorf("Schedule time has passed on Job with id of %s", j.ID)
 	}
 	log.Debugf("Schedule Time: %s", j.ScheduleTime)
-
+	j.ScheduleTime = j.ScheduleTime.UTC()
 	if j.TimesToRepeat != 0 {
 		j.DelayDuration, err = iso8601.FromString(splitTime[2])
 		if err != nil {
@@ -172,12 +172,10 @@ func (j *Job) StartWaiting(d *Dispatcher) {
 func (j *Job) GetWaitDuration() time.Duration {
 	//log.Debugf("%+v", j)
 	waitDuration := time.Duration(j.ScheduleTime.UnixNano() - time.Now().UnixNano())
-
 	if waitDuration < 0 {
 		if j.TimesToRepeat == 0 {
 			return 0
 		}
-
 		if j.LastRunAt.IsZero() {
 			waitDuration = j.DelayDuration.ToDuration()
 			t := j.ScheduleTime
@@ -189,8 +187,15 @@ func (j *Job) GetWaitDuration() time.Duration {
 			}
 			waitDuration = t.Sub(time.Now())
 		} else {
-			last := j.LastRunAt.Add(j.DelayDuration.ToDuration())
-			waitDuration = last.Sub(time.Now())
+			waitDuration = j.DelayDuration.ToDuration()
+			t := j.ScheduleTime
+			for {
+				t = t.Add(waitDuration)
+				if t.After(time.Now()) {
+					break
+				}
+			}
+			waitDuration = t.Sub(time.Now())
 		}
 	}
 

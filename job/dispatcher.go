@@ -246,6 +246,7 @@ func (d *Dispatcher) RemoveWorkRequest(j *Job) bool {
 }
 
 func (d *Dispatcher) AddFutureJob(w *Job, t time.Duration) {
+	d.db.Save(w)
 	work := WorkRequest{wJob: w, id: uuid.NewV1()}
 	d.AddWorkRequest(work, t)
 }

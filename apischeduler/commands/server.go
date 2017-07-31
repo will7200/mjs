@@ -56,8 +56,8 @@ func init() {
 	viper.BindPFlag("database.connection", servercmd.Flags().Lookup("connection"))
 	viper.BindPFlag("interface.workers", servercmd.Flags().Lookup("workers"))
 	viper.BindPFlag("interface.home", servercmd.Flags().Lookup("homedir"))
+	viper.BindPFlag("verbose", servercmd.Flags().Lookup("verbose"))
 	viper.SetEnvPrefix("mda") // will be uppercased automatically
-	viper.BindEnv("VERBOSE", "verbose")
 }
 func server(cmd *cobra.Command, args []string) error {
 	verbose = viper.GetBool("verbose")

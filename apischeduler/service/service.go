@@ -66,6 +66,9 @@ func (ap *stubAPISchedulerService) Add(ctx context.Context, reqjob job.Job) (id 
 			}
 		}
 	}
+	if err = j.ParseSchedule(); err != nil {
+		return
+	}
 	if err = db.Create(j).Error; err != nil {
 		return
 	}
