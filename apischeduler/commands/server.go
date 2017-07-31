@@ -125,3 +125,47 @@ func server(cmd *cobra.Command, args []string) error {
 	}
 	return server.ListenAndServe()
 }
+
+/*
+func rundetach(args []string) error {
+	for i, v := range os.Args {
+		if v == "--detach" {
+			os.Args = append(os.Args[:i], os.Args[i+1:len(os.Args)]...)
+		}
+	}
+	cmd := exec.Command(os.Args[0], os.Args[1:len(os.Args)]...)
+	file, err := os.Create("log_mjs.txt")
+	if err != nil {
+		return err
+	}
+	cmd.Stdout = file
+	cmd.Stderr = file
+	err = cmd.Start()
+	if err != nil {
+		fmt.Println("Process exiting with error ", err)
+	}
+	done := make(chan error)
+	timeout := make(chan bool)
+	time.AfterFunc(3*time.Second, func() {
+		timeout <- true
+	})
+	//scanner := make(chan bool)
+	go func() { done <- cmd.Wait() }()
+	select {
+	case err := <-done:
+		log.Println("Process exiting with error ", err)
+		file, _ = os.Open("log_mjs.txt")
+		fs := bufio.NewScanner(file)
+		for fs.Scan() {
+			text := fs.Text()
+			if strings.HasPrefix(text, "Error") {
+				log.Println(text)
+				break
+			}
+		}
+		return nil
+	case _ = <-timeout:
+		return nil
+	}
+}
+*/
