@@ -116,6 +116,9 @@ func (ap *stubAPISchedulerService) Change(ctx context.Context, id string, reqjob
 		err = apischeduler.GetAppError(fmt.Errorf("Cannot Update record with id %s", id), err.Error())
 		return "", err
 	}
+	ap.dispatch.RemoveWorkRequest(d)
+	d.ParseSchedule()
+	d.StartWaiting(ap.dispatch)
 	//TODO : MAYBE IMPLEMENT TO GET THE AMOUNT OF FIELDS CHANGED
 	message = fmt.Sprintf("Job with id %s has changed", d.ID)
 	return message, err

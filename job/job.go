@@ -161,7 +161,6 @@ func (j *Job) CheckSchedule(d *Dispatcher) {
 }
 func (j *Job) StartWaiting(d *Dispatcher) {
 	waitDuration := j.GetWaitDuration()
-
 	log.Infof("%s Scheduled to run in: %s", j.Name, waitDuration)
 	j.lock.Lock()
 	j.NextRunAt = time.Now().Add(waitDuration)
