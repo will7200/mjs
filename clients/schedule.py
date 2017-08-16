@@ -12,10 +12,12 @@ from time import sleep
 from datetime import datetime, timedelta
 from dateutil.tz import tzlocal
 from glob import glob
-import ConfigParser
+import configparser
 import argparse
 
-config = ConfigParser.ConfigParser()
+os.chdir(os.path.dirname(__file__))
+print(os.getcwd())
+config = configparser.ConfigParser()
 config.read('config.ini')
 
 
@@ -76,18 +78,16 @@ class Scheduler:
         r = requests.post(self.API_URL, data=simplejson.dumps({'Reqjob':data}),
                     headers={'TYPE':'UNIQUE'})
         if r.status_code != 201:
+            if r.status_code > 300:
+                raise Exception(r.json()['error'])
             if not replace:
                 return None
             else:
                 s = r.json()
-                print(s)
-                print(data)
                 id = s['error'].split(';')[1]
-                self.delete(id)
-                self.add(data)
+                self.replace(data,id)
                 return
-            raise Exception(r.text)
-        else:
+        elif r.status_code == 201:
             self.add_to_cache(r,data)
         return r.json()['Id']
     
@@ -110,7 +110,7 @@ class Scheduler:
     
     def update_cache(self):
         r = requests.get(self.API_URL)
-        t = r.json()['jobs']
+        t = r.json()['Results']
         v = {}
         for x in t:
             v[x['ID']] = x
