@@ -3,9 +3,13 @@ package commands
 import (
 	"fmt"
 	stdlog "log"
+	"net"
 	"net/http"
 	"strings"
 	"time"
+
+	"google.golang.org/grpc"
+	"google.golang.org/grpc/reflection"
 
 	"github.com/gorilla/mux"
 	"github.com/jinzhu/gorm"
@@ -17,6 +21,8 @@ import (
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 	"github.com/will7200/mjs/apischeduler/endpoints"
+	pgrpc "github.com/will7200/mjs/apischeduler/grpc"
+	"github.com/will7200/mjs/apischeduler/grpc/pb"
 	apischedulerhttp "github.com/will7200/mjs/apischeduler/http"
 	"github.com/will7200/mjs/apischeduler/service"
 	"github.com/will7200/mjs/job"
@@ -123,7 +129,24 @@ func server(cmd *cobra.Command, args []string) error {
 		Addr:         parsedPort,
 		Handler:      r,
 	}
+	go setupGRPC(svc)
 	return server.ListenAndServe()
+}
+
+func setupGRPC(svc service.APISchedulerService) {
+	ss := pgrpc.NewGRPC(svc)
+	lis, err := net.Listen("tcp", ":4005")
+	if err != nil {
+		log.Fatalf("failed to listen: %v", err)
+	}
+	s := grpc.NewServer()
+	pb.RegisterAPISchedulerServer(s, ss)
+	// Register reflection service on gRPC server.
+	reflection.Register(s)
+	log.Infof("Starting GRPC Server on port 4005")
+	if err := s.Serve(lis); err != nil {
+		log.Fatalf("failed to serve: %v", err)
+	}
 }
 
 /*

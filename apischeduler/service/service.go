@@ -56,7 +56,7 @@ func New(db *gorm.DB, dispatch *job.Dispatcher) (s APISchedulerService) {
 func (ap *stubAPISchedulerService) Add(ctx context.Context, reqjob job.Job) (id string, err error) {
 	db := ap.db
 	j := &reqjob
-	if val := ctx.Value(apischeduler.JobUniqueness).(string); val != "" {
+	if val, ok := ctx.Value(apischeduler.JobUniqueness).(string); val != "" && ok {
 		if val == "UNIQUE" {
 			jj := &job.Job{}
 			if !db.Where(job.Job{Domain: j.Domain, SubDomain: j.SubDomain, Name: j.Name,

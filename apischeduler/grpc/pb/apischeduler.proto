@@ -1,0 +1,69 @@
+syntax = "proto3";
+package pb;
+// The APIScheduler service definition.
+service APIScheduler {
+ rpc Add (AddRequest) returns (AddReply) {}
+ rpc Start (StartRequest) returns (StartReply) {}
+ rpc Remove (RemoveRequest) returns (RemoveReply) {}
+ rpc Change (ChangeRequest) returns (ChangeReply) {}
+ rpc Get (GetRequest) returns (GetReply) {}
+ rpc List (ListRequest) returns (ListReply) {}
+ rpc Enable (EnableRequest) returns (EnableReply) {}
+ rpc Disable (DisableRequest) returns (DisableReply) {}
+}
+message Job {
+    string Name = 1;
+    repeated string Command = 2;
+    string Schedule = 3;
+    string Domain = 4;
+    string SubDomain = 5;
+    string Application = 6;
+    string Epsilon = 7;
+}
+message AddRequest {
+    Job reqjob = 1;
+}
+message AddReply {
+    string Id = 1;
+}
+message StartRequest {
+    string Id = 1;
+}
+message StartReply {
+    string message = 1;
+}
+message RemoveRequest {
+    string Id = 1;
+}
+message RemoveReply {
+    string message = 1;
+}
+message ChangeRequest {
+    string Id = 1;
+}
+message ChangeReply {
+    string message = 1;
+}
+message GetRequest {
+    string Id = 1;
+}
+message GetReply {
+    Job reqjob = 1;
+}
+message ListRequest {
+}
+message ListReply {
+    repeated Job reqjob = 1;
+}
+message EnableRequest {
+    string Id = 1;
+}
+message EnableReply {
+     string message = 1;
+}
+message DisableRequest {
+    string Id = 1;
+}
+message DisableReply {
+     string message = 1;
+}
