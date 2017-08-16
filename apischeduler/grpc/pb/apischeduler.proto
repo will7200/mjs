@@ -10,6 +10,7 @@ service APIScheduler {
  rpc List (ListRequest) returns (ListReply) {}
  rpc Enable (EnableRequest) returns (EnableReply) {}
  rpc Disable (DisableRequest) returns (DisableReply) {}
+ rpc Query (QueryRequest) returns (QueryReply) {}
 }
 message Job {
     string Name = 1;
@@ -66,4 +67,12 @@ message DisableRequest {
 }
 message DisableReply {
      string message = 1;
+}
+
+message QueryRequest {
+    Job query = 1;
+}
+
+message QueryReply {
+    repeated Job jobs = 1;
 }

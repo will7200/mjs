@@ -1,10 +1,13 @@
 package grpc
 
 import (
+	"fmt"
+
 	"google.golang.org/grpc/metadata"
 
 	context "golang.org/x/net/context"
 
+	"github.com/jinzhu/copier"
 	"github.com/will7200/mjs/apischeduler/grpc/pb"
 	"github.com/will7200/mjs/apischeduler/service"
 	"github.com/will7200/mjs/job"
@@ -54,4 +57,23 @@ func (this wrapperService) Enable(ctx context.Context, arg *pb.EnableRequest) (*
 }
 func (this wrapperService) Disable(ctx context.Context, arg *pb.DisableRequest) (*pb.DisableReply, error) {
 	return nil, nil
+}
+
+func (this wrapperService) Query(ctx context.Context, arg *pb.QueryRequest) (*pb.QueryReply, error) {
+	jobquery := &job.Job{}
+	copier.Copy(jobquery, arg.Query)
+	list, err := this.service.Query(ctx, *jobquery)
+	if err != nil {
+		return &pb.QueryReply{}, err
+	}
+	qr := []*pb.Job{}
+	for _, val := range *list {
+		newjob := &pb.Job{}
+		copier.Copy(newjob, val)
+		fmt.Println(val)
+		fmt.Println(newjob)
+		qr = append(qr, newjob)
+	}
+	copier.Copy(qr, list)
+	return &pb.QueryReply{Jobs: qr}, err
 }

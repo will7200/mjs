@@ -38,6 +38,9 @@ type APISchedulerService interface {
 	//METHODS: POST
 	//PATH: /disable
 	Disable(ctx context.Context, id string) (message string, err error)
+	//METHODS: GET
+	//PATH: /query
+	Query(ctx context.Context, query job.Job) (results *[]job.Job, err error)
 }
 
 type stubAPISchedulerService struct {
@@ -171,4 +174,13 @@ func (ap *stubAPISchedulerService) Disable(ctx context.Context, id string) (mess
 	}
 	message = fmt.Sprintf("Job with id %s has been disabled", d.ID)
 	return message, err
+}
+
+func (ap *stubAPISchedulerService) Query(ctx context.Context, query job.Job) (results *[]job.Job, err error) {
+	r := &[]job.Job{}
+	if err = ap.db.Where(query).Find(r).Error; err != nil {
+		return r, err
+	}
+	results = r
+	return results, err
 }
