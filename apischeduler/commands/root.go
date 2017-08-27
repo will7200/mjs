@@ -27,10 +27,9 @@ var cfgFile string
 
 // RootCmd represents the base command when called without any subcommands
 var RootCmd = &cobra.Command{
-	Use:   "mda",
-	Short: "Microservice Discrete Audio",
-	Long: `Microservice Discrete Audio allows a single system
-to download and save information about music`,
+	Use:   "mjs",
+	Short: "Microservice Job Schedular",
+	Long:  `Microservice Job Schedular allows jobs to be scheduled in one Place`,
 	// Uncomment the following line if your bare application
 	// has an action associated with it:
 }
