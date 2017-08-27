@@ -57,12 +57,14 @@ func init() {
 	servercmd.Flags().String("homedir", "./mda/", "home directory to download into")
 	servercmd.Flags().Int("workers", 4, "Amount of workers for the Dispatcher")
 	servercmd.Flags().BoolVar(&showHTTPDir, "httpdir", false, "Output the http directory")
+	servercmd.Flags().Int("grpcport", 4005, "Port that grpc will run on")
 	viper.BindPFlag("interface.port", servercmd.Flags().Lookup("port"))
 	viper.BindPFlag("database.dbname", servercmd.Flags().Lookup("dbname"))
 	viper.BindPFlag("database.connection", servercmd.Flags().Lookup("connection"))
 	viper.BindPFlag("interface.workers", servercmd.Flags().Lookup("workers"))
 	viper.BindPFlag("interface.home", servercmd.Flags().Lookup("homedir"))
 	viper.BindPFlag("verbose", servercmd.Flags().Lookup("verbose"))
+	viper.BindPFlag("interface.grpcport", servercmd.Flags().Lookup("grpcport"))
 	viper.SetEnvPrefix("mda") // will be uppercased automatically
 }
 func server(cmd *cobra.Command, args []string) error {
@@ -122,7 +124,6 @@ func server(cmd *cobra.Command, args []string) error {
 		})
 	}
 	log.Infof("Starting Server on port %d", port)
-	Dispatch.AddPendingJobs()
 	server := &http.Server{
 		ReadTimeout:  5 * time.Second,
 		WriteTimeout: 7 * time.Second,
@@ -130,12 +131,14 @@ func server(cmd *cobra.Command, args []string) error {
 		Handler:      r,
 	}
 	go setupGRPC(svc)
+	Dispatch.AddPendingJobs()
 	return server.ListenAndServe()
 }
 
 func setupGRPC(svc service.APISchedulerService) {
 	ss := pgrpc.NewGRPC(svc)
-	lis, err := net.Listen("tcp", ":4005")
+	port := fmt.Sprintf(":%d", viper.GetInt("interface.grpcport"))
+	lis, err := net.Listen("tcp", port)
 	if err != nil {
 		log.Fatalf("failed to listen: %v", err)
 	}
@@ -143,7 +146,7 @@ func setupGRPC(svc service.APISchedulerService) {
 	pb.RegisterAPISchedulerServer(s, ss)
 	// Register reflection service on gRPC server.
 	reflection.Register(s)
-	log.Infof("Starting GRPC Server on port 4005")
+	log.Infof("Starting GRPC Server on port %d", viper.GetInt("interface.grpcport"))
 	if err := s.Serve(lis); err != nil {
 		log.Fatalf("failed to serve: %v", err)
 	}
