@@ -65,7 +65,7 @@ func init() {
 	viper.BindPFlag("interface.home", servercmd.Flags().Lookup("homedir"))
 	viper.BindPFlag("verbose", servercmd.Flags().Lookup("verbose"))
 	viper.BindPFlag("interface.grpcport", servercmd.Flags().Lookup("grpcport"))
-	viper.SetEnvPrefix("mda") // will be uppercased automatically
+	viper.SetEnvPrefix("mjs") // will be uppercased automatically
 }
 func server(cmd *cobra.Command, args []string) error {
 	verbose = viper.GetBool("verbose")
