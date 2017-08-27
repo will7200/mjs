@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/jinzhu/gorm"
+	log "github.com/sirupsen/logrus"
 
 	"github.com/will7200/mjs/apischeduler"
 	"github.com/will7200/mjs/job"
@@ -59,6 +60,7 @@ func New(db *gorm.DB, dispatch *job.Dispatcher) (s APISchedulerService) {
 func (ap *stubAPISchedulerService) Add(ctx context.Context, reqjob job.Job) (id string, err error) {
 	db := ap.db
 	j := &reqjob
+	log.Debug(ctx.Value(apischeduler.JobUniqueness))
 	if val, ok := ctx.Value(apischeduler.JobUniqueness).(string); val != "" && ok {
 		if val == "UNIQUE" {
 			jj := &job.Job{}

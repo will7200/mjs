@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/emirpasic/gods/lists/arraylist"
+	rbt "github.com/emirpasic/gods/trees/redblacktree"
 	"github.com/jinzhu/gorm"
 	uuid "github.com/satori/go.uuid"
 	log "github.com/sirupsen/logrus"
@@ -138,9 +139,9 @@ type Dispatcher struct {
 	WorkerQueue chan chan WorkRequest
 	timer       *time.Timer
 	quit        chan bool
-	Waiting     []WorkRequest
 	RegFuncs    Funcs
 	db          *gorm.DB
+	Waiting     *rbt.Tree
 }
 
 var WorkQueue = make(chan WorkRequest, 100)
@@ -159,6 +160,7 @@ func (d *Dispatcher) StartDispatcher(nworkers int) {
 	d.quit = make(chan bool, 1)
 	WorkerQueue := d.WorkerQueue
 	d.Workers = arraylist.New()
+	d.Waiting = rbt.NewWithStringComparator()
 	// Now, create all of our workers.
 	for i := 0; i < nworkers; i++ {
 		log.Infof("Starting worker %d", i+1)
@@ -180,7 +182,7 @@ func (d *Dispatcher) StartDispatcher(nworkers int) {
 					d.db.Save(j)
 				}(work, d)
 			case stats := <-StatsQueue:
-				log.Info("CALLING")
+				//log.Info("CALLING")
 				_ = stats
 				//go func(stats *JobStats, d *Dispatcher) {
 				//if err := d.db.Create(stats).Error; err != nil {
@@ -214,12 +216,11 @@ func (d *Dispatcher) AddJob(w WorkRequest) {
 }
 
 func (d *Dispatcher) RemoveWaiting(t *WorkRequest) {
-	for index, request := range d.Waiting {
-		if request == *t {
-			t.when.Stop()
-			d.AddJob(*t)
-			d.Waiting = append(d.Waiting[:index], d.Waiting[index+1:]...)
-		}
+	_, found := d.Waiting.Get(t.id.String())
+	if found {
+		t.when.Stop()
+		d.AddJob(*t)
+		d.Waiting.Remove(t.id.String())
 	}
 }
 func (d *Dispatcher) AddWorkRequest(w WorkRequest, t time.Duration) {
@@ -230,15 +231,18 @@ func (d *Dispatcher) AddWorkRequest(w WorkRequest, t time.Duration) {
 	}
 	w.when = NewAfterFunc(t, f)
 	w.wJob.jobTimer = w.when.timer
-	d.Waiting = append(d.Waiting, w)
+	d.Waiting.Put(w.id.String(), w)
 }
 
 func (d *Dispatcher) RemoveWorkRequest(j *Job) bool {
-	for index, request := range d.Waiting {
-		if request.wJob.ID == j.ID {
-			request.when.Stop()
-			request.wJob.jobTimer.Stop()
-			d.Waiting = append(d.Waiting[:index], d.Waiting[index+1:]...)
+	it := d.Waiting.Iterator()
+	for it.Next() {
+		value := it.Value()
+		val := value.(WorkRequest)
+		if val.wJob.ID == j.ID {
+			val.when.Stop()
+			val.wJob.jobTimer.Stop()
+			d.Waiting.Remove(val.id.String())
 			return true
 		}
 	}

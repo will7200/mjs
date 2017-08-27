@@ -1,7 +1,7 @@
 package grpc
 
 import (
-	"fmt"
+	"strings"
 
 	"google.golang.org/grpc/metadata"
 
@@ -24,13 +24,13 @@ func NewGRPC(s service.APISchedulerService) (r pb.APISchedulerServer) {
 
 func (this wrapperService) Add(ctx context.Context, arg *pb.AddRequest) (arp *pb.AddReply, e error) {
 	reqjob := arg.Reqjob
+	job := job.Job{}
+	copier.Copy(&job, reqjob)
 	md, _ := metadata.FromContext(ctx)
 	for key, value := range md {
-		ctx = context.WithValue(ctx, key, value)
+		ctx = context.WithValue(ctx, strings.ToUpper(key), value[0])
 	}
-	id, err := this.service.Add(ctx, job.Job{Name: reqjob.Name,
-		Command:  reqjob.Command,
-		Schedule: reqjob.Schedule})
+	id, err := this.service.Add(ctx, job)
 	if err != nil {
 		return arp, err
 	}
@@ -70,8 +70,6 @@ func (this wrapperService) Query(ctx context.Context, arg *pb.QueryRequest) (*pb
 	for _, val := range *list {
 		newjob := &pb.Job{}
 		copier.Copy(newjob, val)
-		fmt.Println(val)
-		fmt.Println(newjob)
 		qr = append(qr, newjob)
 	}
 	copier.Copy(qr, list)

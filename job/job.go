@@ -121,11 +121,12 @@ func (j *Job) ParseSchedule() error {
 			return err
 		}
 	}
+	log.Debug(j.ScheduleTime, time.Now())
+	j.ScheduleTime = j.ScheduleTime.UTC()
 	if (time.Duration(j.ScheduleTime.UnixNano() - time.Now().UnixNano())) < 0 {
 		return fmt.Errorf("Schedule time has passed on Job with id of %s", j.ID)
 	}
 	log.Debugf("Schedule Time: %s", j.ScheduleTime)
-	j.ScheduleTime = j.ScheduleTime.UTC()
 	if j.TimesToRepeat != 0 {
 		j.DelayDuration, err = iso8601.FromString(splitTime[2])
 		if err != nil {
