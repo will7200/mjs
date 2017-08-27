@@ -26,7 +26,7 @@ func (this wrapperService) Add(ctx context.Context, arg *pb.AddRequest) (arp *pb
 	reqjob := arg.Reqjob
 	job := job.Job{}
 	copier.Copy(&job, reqjob)
-	md, _ := metadata.FromContext(ctx)
+	md, _ := metadata.FromIncomingContext(ctx)
 	for key, value := range md {
 		ctx = context.WithValue(ctx, strings.ToUpper(key), value[0])
 	}
