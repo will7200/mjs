@@ -41,6 +41,7 @@ var (
 	db                *gorm.DB
 	err               error
 	showHTTPDir       bool
+	startgpc          bool
 )
 var servercmd = &cobra.Command{
 	Use:     "server",
@@ -57,6 +58,7 @@ func init() {
 	servercmd.Flags().String("homedir", "./mda/", "home directory to download into")
 	servercmd.Flags().Int("workers", 4, "Amount of workers for the Dispatcher")
 	servercmd.Flags().BoolVar(&showHTTPDir, "httpdir", false, "Output the http directory")
+	servercmd.Flags().BoolVar(&startgpc, "startgpc", false, "Start gpc server")
 	servercmd.Flags().Int("grpcport", 4005, "Port that grpc will run on")
 	viper.BindPFlag("interface.port", servercmd.Flags().Lookup("port"))
 	viper.BindPFlag("database.dbname", servercmd.Flags().Lookup("dbname"))
@@ -70,6 +72,7 @@ func init() {
 func server(cmd *cobra.Command, args []string) error {
 	verbose = viper.GetBool("verbose")
 	if verbose {
+		log.Info("changeing to debug ")
 		log.SetLevel(log.DebugLevel)
 	}
 	var parsedPort string
@@ -89,7 +92,7 @@ func server(cmd *cobra.Command, args []string) error {
 	Dispatch.StartDispatcher(viper.GetInt("interface.workers"))
 	db, err = gorm.Open(viper.GetString("database.dbname"), viper.GetString("database.connection"))
 	if verbose {
-		db.LogMode(true)
+		db.LogMode(false)
 	}
 	if err != nil {
 		panic(fmt.Sprintf("failed to connect database \ntype %s with connection %s", viper.GetString("database.dbname"), viper.GetString("database.connection")))
@@ -100,7 +103,7 @@ func server(cmd *cobra.Command, args []string) error {
 		panic("Could not make/migrate tables")
 	}
 	Dispatch.SetPersistStorage(db)
-	svc := service.New(db, Dispatch)
+	svc := service.New(db, Dispatch, log.StandardLogger())
 	ep := endpoints.New(svc)
 	r := apischedulerhttp.NewHTTPHandler(ep)
 	if verbose || showHTTPDir {
@@ -130,7 +133,9 @@ func server(cmd *cobra.Command, args []string) error {
 		Addr:         parsedPort,
 		Handler:      r,
 	}
-	go setupGRPC(svc)
+	if startgpc {
+		go setupGRPC(svc)
+	}
 	Dispatch.AddPendingJobs()
 	return server.ListenAndServe()
 }

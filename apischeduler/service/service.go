@@ -51,8 +51,9 @@ type stubAPISchedulerService struct {
 
 // Get a new instance of the service.
 // If you want to add service middleware this is the place to put them.
-func New(db *gorm.DB, dispatch *job.Dispatcher) (s APISchedulerService) {
+func New(db *gorm.DB, dispatch *job.Dispatcher, logger *log.Logger) (s APISchedulerService) {
 	s = &stubAPISchedulerService{db, dispatch}
+	s = loggingMiddleware{logger, s}
 	return s
 }
 
@@ -117,10 +118,19 @@ func (ap *stubAPISchedulerService) Change(ctx context.Context, id string, reqjob
 	if err != nil {
 		return "", err
 	}
-	if err = ap.db.Model(d).Update(reqjob).Error; err != nil {
+	log.WithFields(log.Fields{
+		"from":fmt.Sprintf("%+v", d),
+		"to":fmt.Sprintf("%+v", reqjob),
+	}).Info("Change Request")
+	if err = ap.db.Model(d).Omit("id").Updates(reqjob).Error; err != nil {
 		err = apischeduler.GetAppError(fmt.Errorf("Cannot Update record with id %s", id), err.Error())
 		return "", err
 	}
+	newd , err := ap.Get(ctx, id)
+	log.WithFields(log.Fields{
+		"model": fmt.Sprintf("%+v", d),
+		"new job": fmt.Sprintf("%+v", newd),
+	}).Debug("Model View Update")
 	ap.dispatch.RemoveWorkRequest(d)
 	d.ParseSchedule()
 	d.StartWaiting(ap.dispatch)
