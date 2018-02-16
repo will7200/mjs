@@ -42,6 +42,7 @@ var (
 	err               error
 	showHTTPDir       bool
 	startgpc          bool
+	dispatcherVerbose bool
 )
 var servercmd = &cobra.Command{
 	Use:     "server",
@@ -60,6 +61,7 @@ func init() {
 	servercmd.Flags().BoolVar(&showHTTPDir, "httpdir", false, "Output the http directory")
 	servercmd.Flags().BoolVar(&startgpc, "startgpc", false, "Start gpc server")
 	servercmd.Flags().Int("grpcport", 4005, "Port that grpc will run on")
+	servercmd.Flags().BoolVar(&dispatcherVerbose, "dispatcherVerbose", false, "Show ouput of commands from dispatch workers")
 	viper.BindPFlag("interface.port", servercmd.Flags().Lookup("port"))
 	viper.BindPFlag("database.dbname", servercmd.Flags().Lookup("dbname"))
 	viper.BindPFlag("database.connection", servercmd.Flags().Lookup("connection"))
@@ -82,13 +84,16 @@ func server(cmd *cobra.Command, args []string) error {
 	} else {
 		parsedPort = ":4004"
 	}
-	log.SetFormatter(&log.TextFormatter{ForceColors: true})
+	log.SetFormatter(&log.TextFormatter{ForceColors: true, FullTimestamp:true})
 	log.SetOutput(colorable.NewColorableStdout())
 	log.AddHook(hooks.NewHook(&hooks.CallerHookOptions{
 		Field: "src",
 		Flags: stdlog.Lshortfile,
 	}))
 	Dispatch = &job.Dispatcher{}
+	if dispatcherVerbose {
+		Dispatch.SetVerbose(true)
+	}
 	Dispatch.StartDispatcher(viper.GetInt("interface.workers"))
 	db, err = gorm.Open(viper.GetString("database.dbname"), viper.GetString("database.connection"))
 	if verbose {

@@ -30,14 +30,15 @@ type WorkRequest struct {
 
 var callable Funcs
 
-func NewWorker(id int, workerQueue chan chan WorkRequest) Worker {
+func NewWorker(id int, workerQueue chan chan WorkRequest, verbose bool) Worker {
 	// Create, and return the worker.
 	worker := Worker{
 		ID:          id,
 		Work:        make(chan WorkRequest),
 		WorkerQueue: workerQueue,
 		QuitChan:    make(chan bool),
-		message:     make(chan string)}
+		message:     make(chan string),
+		verbose:     verbose}
 
 	return worker
 }
@@ -48,6 +49,7 @@ type Worker struct {
 	WorkerQueue chan chan WorkRequest
 	QuitChan    chan bool
 	message     chan string
+	verbose     bool
 }
 
 // Start  the worker by starting a goroutine, that is
@@ -94,7 +96,7 @@ func (w *Worker) Start() {
 					stats.RanAt = time.Now()
 					log.Debugf("%v\n", args)
 					cmd := exec.Command(args[0], args[1:]...)
-					if work.wJob.Pipeoutput {
+					if work.wJob.Pipeoutput || w.verbose {
 						cmd.Stdout = os.Stdout
 						cmd.Stderr = os.Stderr
 					}
@@ -142,6 +144,7 @@ type Dispatcher struct {
 	RegFuncs    Funcs
 	db          *gorm.DB
 	Waiting     *rbt.Tree
+	verbose     bool
 }
 
 var WorkQueue = make(chan WorkRequest, 100)
@@ -164,7 +167,7 @@ func (d *Dispatcher) StartDispatcher(nworkers int) {
 	// Now, create all of our workers.
 	for i := 0; i < nworkers; i++ {
 		log.Infof("Starting worker %d", i+1)
-		worker := NewWorker(i+1, d.WorkerQueue)
+		worker := NewWorker(i+1, d.WorkerQueue, d.verbose)
 		worker.Start()
 		d.Workers.Add(worker)
 	}
@@ -257,6 +260,10 @@ func (d *Dispatcher) AddFutureJob(w *Job, t time.Duration) {
 
 func (d *Dispatcher) SetPersistStorage(db *gorm.DB) {
 	d.db = db
+}
+
+func (d *Dispatcher) SetVerbose(v bool) {
+	d.verbose = v
 }
 
 func (d *Dispatcher) AddPendingJobs() {

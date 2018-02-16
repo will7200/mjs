@@ -5,3 +5,5 @@
 cache/
 *.ini
 vendor/
+
+.idea/
