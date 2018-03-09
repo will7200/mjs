@@ -27,6 +27,7 @@ import (
 	"github.com/will7200/mjs/apischeduler/service"
 	"github.com/will7200/mjs/job"
 	"github.com/will7200/mjs/utils/hooks"
+	"github.com/rifflock/lfshook"
 )
 
 var (
@@ -74,7 +75,7 @@ func init() {
 func server(cmd *cobra.Command, args []string) error {
 	verbose = viper.GetBool("verbose")
 	if verbose {
-		log.Info("changeing to debug ")
+		log.Info("changing to debug")
 		log.SetLevel(log.DebugLevel)
 	}
 	var parsedPort string
@@ -90,6 +91,16 @@ func server(cmd *cobra.Command, args []string) error {
 		Field: "src",
 		Flags: stdlog.Lshortfile,
 	}))
+	if viper.GetString("logging.infolevel") != "" && viper.GetString("logging.errorlevel") != ""{
+		hook := lfshook.NewHook(
+			lfshook.PathMap{
+				log.InfoLevel: viper.GetString("logging.infolevel"),
+				log.ErrorLevel: viper.GetString("logging.errorlevel"),
+			},
+		)
+		hook.SetFormatter(&log.JSONFormatter{})
+		log.AddHook(hook)
+	}
 	Dispatch = &job.Dispatcher{}
 	if dispatcherVerbose {
 		Dispatch.SetVerbose(true)
